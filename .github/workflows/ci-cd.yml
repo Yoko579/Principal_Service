@@ -1,4 +1,4 @@
-name: CI-CD AnalyseProject
+name: CI-CD principalProject
 
 on:
   push:
@@ -28,41 +28,42 @@ jobs:
       - name: Vérification du JAR
         run: |
           ls -lh target/
-          test -f target/AnalyseProject-0.0.1-SNAPSHOT.jar
+          test -f target/PrincipalService-0.0.1-SNAPSHOT.jar
 
       - name: Sauvegarde du JAR
         uses: actions/upload-artifact@v4
         with:
-          name: analyseproject-jar
-          path: target/AnalyseProject-0.0.1-SNAPSHOT.jar
+          name: principalproject-jar
+          path: target/PrincipalService-0.0.1-SNAPSHOT.jar
           if-no-files-found: error
 
       - name: Construction de l'image Docker
-        run: docker build -t analyse-project:1.0 .
+        run: docker build -t principal-project:1.0 .
 
       - name: Démarrage du conteneur Docker
         run: |
           docker run -d \
-            --name analyse-ci \
-            -p 8089:8089 \
-            analyse-project:1.0
+            --name principal-ci \
+            -p 8000:8000 \
+            principal-project:1.0
 
-      - name: Vérification du service SOAP
+      - name: Vérification du service
         run: |
           for i in $(seq 1 30); do
-            if curl -fsS \
-              "http://localhost:8089/analyzer?wsdl" \
-              -o /tmp/analyzer.wsdl && \
-              grep -qi "definitions" /tmp/analyzer.wsdl; then
-              echo "Service SOAP accessible"
+            RESPONSE=$(curl -fsS http://localhost:8000/principal/test 2>/dev/null || true)
+
+            if [ "$RESPONSE" = "0" ]; then
+              echo "Service Principal accessible : réponse = 0"
               exit 0
             fi
+
             sleep 2
           done
-          echo "Service SOAP inaccessible"
-          docker logs analyse-ci
+
+          echo "Service Principal inaccessible ou réponse incorrecte"
+          docker logs principal-ci
           exit 1
 
       - name: Arrêt du conteneur
         if: always()
-        run: docker rm -f analyse-ci || true
+        run: docker rm -f principal-ci || true

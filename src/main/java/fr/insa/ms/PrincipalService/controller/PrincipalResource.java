@@ -24,8 +24,9 @@ public class PrincipalResource {
 	RestTemplate restTemplate;
 
 	@GetMapping("/test")
-	public void test() {
+	public int test() {
 		System.out.println("Test Principal!");
+		return 0;
 	}
 	
 	@GetMapping("/getOrder/{id}")
